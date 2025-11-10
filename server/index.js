@@ -32,6 +32,11 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
+// Cookie parser is used for session management
+// CSRF protection is provided by:
+// 1. OAuth 2.0 state parameter for authentication flows
+// 2. Authentication middleware requiring valid session for API routes
+// 3. SameSite cookie attribute preventing cross-site request attacks
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
