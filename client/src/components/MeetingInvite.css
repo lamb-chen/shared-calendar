@@ -1,0 +1,153 @@
+.invite-modal {
+  max-width: 600px;
+}
+
+.time-display {
+  background: #f0f4ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.time-info {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.time-info:last-child {
+  margin-bottom: 0;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.no-attendees {
+  text-align: center;
+  color: #999;
+  padding: 1rem;
+}
+
+.attendees-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.attendee-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.attendee-item:hover {
+  background: #f8f9fa;
+}
+
+.attendee-item input[type="checkbox"] {
+  margin-right: 1rem;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.attendee-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.attendee-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.2rem;
+}
+
+.attendee-email {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn-cancel,
+.btn-submit {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background: #d0d0d0;
+}
+
+.btn-submit {
+  background: #667eea;
+  color: white;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
