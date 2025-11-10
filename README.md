@@ -175,7 +175,12 @@ A web application that lets users automatically share their calendars with each 
 - **No Event Details Stored**: The app doesn't store any calendar event details
 - **OAuth 2.0**: Secure authentication through Google
 - **Selective Sharing**: Users control who can see their availability
-- **Session Management**: Secure session handling with encrypted cookies
+- **Session Management**: Secure session handling with encrypted, httpOnly cookies
+- **Rate Limiting**: Protection against brute force and DoS attacks
+  - General API: 100 requests per 15 minutes per IP
+  - Authentication: 10 requests per 15 minutes per IP
+- **CSRF Protection**: OAuth state parameter provides CSRF protection for authentication flow
+- **Secure Cookies**: httpOnly, sameSite flags enabled for production
 - **Privacy First**: Only busy/free time is shared, never event titles or descriptions
 
 ## Development Notes
