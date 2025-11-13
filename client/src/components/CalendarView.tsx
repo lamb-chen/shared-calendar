@@ -21,7 +21,7 @@ export function CalendarView({
   onWeekChange,
 }: CalendarViewProps) {
   const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8 AM to 7 PM
-  const weekDays = Array.from({ length: 5 }, (_, i) => {
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(weekStart);
     date.setDate(date.getDate() + i);
     return date;
@@ -33,7 +33,7 @@ export function CalendarView({
 
   const formatWeekRange = () => {
     const end = new Date(weekStart);
-    end.setDate(end.getDate() + 4);
+    end.setDate(end.getDate() + 6);
     return `${formatDate(weekStart)} - ${formatDate(end)}`;
   };
 
@@ -42,6 +42,11 @@ export function CalendarView({
   };
 
   const isEventInSlot = (event: CalendarEvent, date: Date, hour: number) => {
+    // Don't show all-day events in regular time slots
+    if (event.isAllDay) {
+      return false;
+    }
+
     const slotStart = new Date(date);
     slotStart.setHours(hour, 0, 0, 0);
     const slotEnd = new Date(date);
@@ -52,6 +57,15 @@ export function CalendarView({
 
   const getEventsInSlot = (date: Date, hour: number) => {
     return events.filter(event => isEventInSlot(event, date, hour));
+  };
+
+  const getAllDayEventsForDate = (date: Date) => {
+    return events.filter(event => {
+      if (!event.isAllDay) return false;
+
+      const eventDate = new Date(event.start);
+      return eventDate.toDateString() === date.toDateString();
+    });
   };
 
   const getUserColor = (userId: string) => {
@@ -84,7 +98,7 @@ export function CalendarView({
         <div className="overflow-x-auto">
           <div className="min-w-[800px]">
             {/* Header row with days */}
-            <div className="grid grid-cols-6 gap-px bg-gray-200 border border-gray-200">
+            <div className="grid grid-cols-8 gap-px bg-gray-200 border border-gray-200">
               <div className="bg-white p-3">
                 <span className="text-gray-600">Time</span>
               </div>
@@ -96,10 +110,54 @@ export function CalendarView({
               ))}
             </div>
 
+            {/* All-day row */}
+            <div className="border-l border-r border-b border-gray-200">
+              <div className="grid grid-cols-8 gap-px bg-gray-200 min-h-[80px]">
+                <div className="bg-white p-3 flex items-start">
+                  <span className="text-gray-600 text-sm">All-day</span>
+                </div>
+                {weekDays.map((day, dayIndex) => {
+                  const allDayEvents = getAllDayEventsForDate(day);
+                  const hasEvents = allDayEvents.length > 0;
+
+                  return (
+                    <div
+                      key={dayIndex}
+                      className="bg-white p-1 cursor-pointer hover:bg-gray-50 transition-colors relative"
+                    >
+                      {hasEvents && (
+                        <div className="space-y-1 h-full">
+                          {allDayEvents.map((event) => {
+                            const userColor = getUserColor(event.userId);
+                            const isCurrentUser = event.userId === currentUserId;
+                            const displayText = isCurrentUser && event.title ? event.title : 'Busy';
+
+                            return (
+                              <div
+                                key={event.id}
+                                className="rounded p-2 text-white text-sm relative overflow-hidden flex items-center justify-center"
+                                style={{
+                                  backgroundColor: userColor,
+                                  opacity: 0.9,
+                                }}
+                                title={isCurrentUser && event.title ? event.title : undefined}
+                              >
+                                <span className="truncate">{displayText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Time slots */}
             <div className="border-l border-r border-b border-gray-200">
               {hours.map((hour) => (
-                <div key={hour} className="grid grid-cols-6 gap-px bg-gray-200 min-h-[80px]">
+                <div key={hour} className="grid grid-cols-8 gap-px bg-gray-200 min-h-[80px]">
                   <div className="bg-white p-3 flex items-start">
                     <span className="text-gray-600 text-sm">
                       {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}

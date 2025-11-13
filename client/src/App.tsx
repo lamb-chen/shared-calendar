@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './components/ui/dropdown-menu';
-import { Calendar, LogOut, ChevronDown } from 'lucide-react';
+import { RefreshCw, LogOut, ChevronDown } from 'lucide-react';
 
 // Mock data for demonstration
 const mockUsers: User[] = [
@@ -22,6 +22,7 @@ const mockUsers: User[] = [
 
 const mockEvents: CalendarEvent[] = [
   // Week 1
+  { id: '2', userId: '2', start: new Date(2025, 10, 12, 0, 0), end: new Date(2025, 10, 12, 23, 59), title: 'Team Offsite', isAllDay: true },
   { id: '3', userId: '2', start: new Date(2025, 10, 13, 9, 0), end: new Date(2025, 10, 13, 10, 0) },
   { id: '4', userId: '2', start: new Date(2025, 10, 13, 12, 0), end: new Date(2025, 10, 13, 13, 0) },
   { id: '5', userId: '3', start: new Date(2025, 10, 14, 13, 0), end: new Date(2025, 10, 14, 15, 0) },
@@ -49,7 +50,7 @@ const mockEvents: CalendarEvent[] = [
 
 function AppContent() {
   const { user, calendarEvents, isLoadingEvents, isGoogleLoaded, signOut, loadCalendarEvents } = useGoogleAuth();
-  
+
   // Create current user from Google account
   const currentUser: User | null = user ? {
     id: '1',
@@ -69,6 +70,8 @@ function AppContent() {
 
   // Convert Google Calendar events to our CalendarEvent format
   const googleCalendarEvents: CalendarEvent[] = calendarEvents.map(event => {
+    // All-day events use 'date' instead of 'dateTime'
+    const isAllDay = !!event.start?.date && !event.start?.dateTime;
     const startStr = event.start?.dateTime || event.start?.date;
     const endStr = event.end?.dateTime || event.end?.date;
     return {
@@ -77,6 +80,7 @@ function AppContent() {
       start: startStr ? new Date(startStr) : new Date(),
       end: endStr ? new Date(endStr) : new Date(),
       title: event.summary || '(No title)',
+      isAllDay: isAllDay,
     };
   });
 
@@ -147,17 +151,17 @@ function AppContent() {
                     <ChevronDown className="w-4 h-4 text-gray-500" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem 
-                      onClick={loadCalendarEvents} 
+                    <DropdownMenuItem
+                      onClick={loadCalendarEvents}
                       className="cursor-pointer"
                       disabled={isLoadingEvents}
                     >
-                      <Calendar className="w-4 h-4 mr-2" />
+                      <RefreshCw className="w-4 h-4 mr-2" />
                       <span>{isLoadingEvents ? 'Loading...' : 'Reload Calendar events'}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={signOut} 
+                    <DropdownMenuItem
+                      onClick={signOut}
                       className="cursor-pointer text-red-600 focus:text-red-600"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
