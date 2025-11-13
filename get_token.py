@@ -18,11 +18,9 @@ import os
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 # Set the scopes you need. Adjust as necessary.
+# For read-only access to Google Calendar:
 SCOPES = [
     'https://www.googleapis.com/auth/calendar.readonly',
-    'https://www.googleapis.com/auth/drive.metadata.readonly',
-    'https://www.googleapis.com/auth/tasks.readonly',
-    'https://mail.google.com/'
 ]
 
 CREDS_FILE = 'credentials.json'
