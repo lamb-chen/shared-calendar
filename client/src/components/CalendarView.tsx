@@ -62,11 +62,11 @@ export function CalendarView({
   };
 
   const getEventsInSlot = (date: Date, hour: number) => {
-    return events.filter(event => isEventInSlot(event, date, hour));
+    return events.filter((event) => isEventInSlot(event, date, hour));
   };
 
   const getAllDayEventsForDate = (date: Date) => {
-    return events.filter(event => {
+    return events.filter((event) => {
       if (!event.isAllDay) return false;
 
       const eventDate = new Date(event.start);
@@ -75,7 +75,7 @@ export function CalendarView({
   };
 
   const getUserColor = (userId: string) => {
-    return users.find(u => u.id === userId)?.color || '#gray-400';
+    return users.find((u) => u.id === userId)?.color || '#gray-400';
   };
 
   const handleSlotClick = (date: Date, hour: number) => {
@@ -113,17 +113,14 @@ export function CalendarView({
                 return (
                   <div
                     key={index}
-                    className={`p-3 text-center transition-colors ${today
-                        ? 'bg-gray-100/50 border-t border-gray-300'
-                        : 'bg-white'
-                      }`}
+                    className={`p-3 text-center transition-colors ${
+                      today ? 'bg-gray-100/50 border-t border-gray-300' : 'bg-white'
+                    }`}
                   >
                     <div className={today ? 'text-gray-900 font-medium' : 'text-gray-900'}>
                       {getDayName(day)}
                     </div>
-                    <div className="text-gray-600 text-sm">
-                      {formatDate(day)}
-                    </div>
+                    <div className="text-gray-600 text-sm">{formatDate(day)}</div>
                   </div>
                 );
               })}
@@ -143,10 +140,9 @@ export function CalendarView({
                   return (
                     <div
                       key={dayIndex}
-                      className={`p-1 cursor-pointer transition-colors relative ${today
-                          ? 'bg-gray-50/70 hover:bg-gray-100/70'
-                          : 'bg-white hover:bg-gray-50'
-                        }`}
+                      className={`p-1 cursor-pointer transition-colors relative ${
+                        today ? 'bg-gray-50/70 hover:bg-gray-100/70' : 'bg-white hover:bg-gray-50'
+                      }`}
                     >
                       {hasEvents && (
                         <div className="space-y-1 h-full">
@@ -183,10 +179,9 @@ export function CalendarView({
                     return (
                       <div
                         key={dayIndex}
-                        className={`p-1 cursor-pointer transition-colors relative ${today
-                            ? 'bg-gray-50/70 hover:bg-gray-100/70'
-                            : 'bg-white hover:bg-gray-50'
-                          }`}
+                        className={`p-1 cursor-pointer transition-colors relative ${
+                          today ? 'bg-gray-50/70 hover:bg-gray-100/70' : 'bg-white hover:bg-gray-50'
+                        }`}
                         onClick={() => handleSlotClick(day, hour)}
                       >
                         {hasEvents && (
@@ -218,10 +213,7 @@ export function CalendarView({
             <div className="flex flex-wrap gap-4">
               {users.map((user) => (
                 <div key={user.id} className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: user.color }}
-                  />
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: user.color }} />
                   <span className="text-gray-700 text-sm">{user.name}</span>
                 </div>
               ))}

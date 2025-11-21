@@ -1,19 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarView } from './components/CalendarView';
 import { UserList } from './components/UserList';
 import { InviteDialog } from './components/InviteDialog';
 import { ICloudConnectModal } from './components/ICloudConnectModal';
+import { UserProfileDropdown } from './components/UserProfileDropdown';
 import { User, CalendarEvent, TimeSlot } from './types';
 import { GoogleAuthProvider, useGoogleAuth } from './contexts/GoogleAuthContext';
 import { CalendarProviderWrapper, useCalendar } from './contexts/CalendarContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './components/ui/dropdown-menu';
-import { RefreshCw, LogOut, ChevronDown, Cloud } from 'lucide-react';
+import { useICloudConnection } from './hooks/useICloudConnection';
 
 // Mock data for demonstration
 const mockUsers: User[] = [
@@ -24,109 +18,153 @@ const mockUsers: User[] = [
 
 const mockEvents: CalendarEvent[] = [
   // Week 1
-  { id: '2', userId: '2', start: new Date(2025, 10, 12, 0, 0), end: new Date(2025, 10, 12, 23, 59), title: 'Team Offsite', isAllDay: true },
+  {
+    id: '2',
+    userId: '2',
+    start: new Date(2025, 10, 12, 0, 0),
+    end: new Date(2025, 10, 12, 23, 59),
+    title: 'Team Offsite',
+    isAllDay: true,
+  },
   { id: '3', userId: '2', start: new Date(2025, 10, 13, 9, 0), end: new Date(2025, 10, 13, 10, 0) },
-  { id: '4', userId: '2', start: new Date(2025, 10, 13, 12, 0), end: new Date(2025, 10, 13, 13, 0) },
-  { id: '5', userId: '3', start: new Date(2025, 10, 14, 13, 0), end: new Date(2025, 10, 14, 15, 0) },
-  { id: '6', userId: '4', start: new Date(2025, 10, 14, 11, 0), end: new Date(2025, 10, 14, 12, 0) },
-  { id: '8', userId: '2', start: new Date(2025, 10, 15, 10, 0), end: new Date(2025, 10, 15, 11, 0) },
-  { id: '9', userId: '3', start: new Date(2025, 10, 15, 14, 0), end: new Date(2025, 10, 15, 16, 0) },
+  {
+    id: '4',
+    userId: '2',
+    start: new Date(2025, 10, 13, 12, 0),
+    end: new Date(2025, 10, 13, 13, 0),
+  },
+  {
+    id: '5',
+    userId: '3',
+    start: new Date(2025, 10, 14, 13, 0),
+    end: new Date(2025, 10, 14, 15, 0),
+  },
+  {
+    id: '6',
+    userId: '4',
+    start: new Date(2025, 10, 14, 11, 0),
+    end: new Date(2025, 10, 14, 12, 0),
+  },
+  {
+    id: '8',
+    userId: '2',
+    start: new Date(2025, 10, 15, 10, 0),
+    end: new Date(2025, 10, 15, 11, 0),
+  },
+  {
+    id: '9',
+    userId: '3',
+    start: new Date(2025, 10, 15, 14, 0),
+    end: new Date(2025, 10, 15, 16, 0),
+  },
   // Week 2
-  { id: '10', userId: '4', start: new Date(2025, 10, 18, 15, 0), end: new Date(2025, 10, 18, 16, 30) },
-  { id: '12', userId: '2', start: new Date(2025, 10, 19, 14, 0), end: new Date(2025, 10, 19, 15, 0) },
-  { id: '13', userId: '3', start: new Date(2025, 10, 20, 11, 0), end: new Date(2025, 10, 20, 12, 30) },
-  { id: '14', userId: '4', start: new Date(2025, 10, 21, 13, 0), end: new Date(2025, 10, 21, 14, 0) },
+  {
+    id: '10',
+    userId: '4',
+    start: new Date(2025, 10, 18, 15, 0),
+    end: new Date(2025, 10, 18, 16, 30),
+  },
+  {
+    id: '12',
+    userId: '2',
+    start: new Date(2025, 10, 19, 14, 0),
+    end: new Date(2025, 10, 19, 15, 0),
+  },
+  {
+    id: '13',
+    userId: '3',
+    start: new Date(2025, 10, 20, 11, 0),
+    end: new Date(2025, 10, 20, 12, 30),
+  },
+  {
+    id: '14',
+    userId: '4',
+    start: new Date(2025, 10, 21, 13, 0),
+    end: new Date(2025, 10, 21, 14, 0),
+  },
   // Week 3
-  { id: '15', userId: '2', start: new Date(2025, 10, 25, 9, 0), end: new Date(2025, 10, 25, 10, 30) },
-  { id: '16', userId: '3', start: new Date(2025, 10, 26, 14, 0), end: new Date(2025, 10, 26, 16, 0) },
-  { id: '17', userId: '4', start: new Date(2025, 10, 27, 10, 0), end: new Date(2025, 10, 27, 11, 0) },
+  {
+    id: '15',
+    userId: '2',
+    start: new Date(2025, 10, 25, 9, 0),
+    end: new Date(2025, 10, 25, 10, 30),
+  },
+  {
+    id: '16',
+    userId: '3',
+    start: new Date(2025, 10, 26, 14, 0),
+    end: new Date(2025, 10, 26, 16, 0),
+  },
+  {
+    id: '17',
+    userId: '4',
+    start: new Date(2025, 10, 27, 10, 0),
+    end: new Date(2025, 10, 27, 11, 0),
+  },
   // Week 4
   { id: '18', userId: '2', start: new Date(2025, 11, 2, 13, 0), end: new Date(2025, 11, 2, 15, 0) },
   { id: '19', userId: '3', start: new Date(2025, 11, 3, 9, 0), end: new Date(2025, 11, 3, 10, 0) },
-  { id: '20', userId: '4', start: new Date(2025, 11, 4, 14, 0), end: new Date(2025, 11, 4, 15, 30) },
+  {
+    id: '20',
+    userId: '4',
+    start: new Date(2025, 11, 4, 14, 0),
+    end: new Date(2025, 11, 4, 15, 30),
+  },
   // Week 5
   { id: '21', userId: '2', start: new Date(2025, 11, 9, 11, 0), end: new Date(2025, 11, 9, 12, 0) },
-  { id: '22', userId: '3', start: new Date(2025, 11, 10, 15, 0), end: new Date(2025, 11, 10, 16, 0) },
-  { id: '23', userId: '4', start: new Date(2025, 11, 11, 10, 0), end: new Date(2025, 11, 11, 11, 30) },
+  {
+    id: '22',
+    userId: '3',
+    start: new Date(2025, 11, 10, 15, 0),
+    end: new Date(2025, 11, 10, 16, 0),
+  },
+  {
+    id: '23',
+    userId: '4',
+    start: new Date(2025, 11, 11, 10, 0),
+    end: new Date(2025, 11, 11, 11, 30),
+  },
 ];
 
-function AppContent() {
+function AppContent({ 
+  weekStart, 
+  setWeekStart 
+}: { 
+  weekStart: Date;
+  setWeekStart: (date: Date) => void;
+}) {
   const { user, isGoogleLoaded, signOut } = useGoogleAuth();
   const { events: calendarEvents, isLoading: isLoadingEvents, refreshEvents } = useCalendar();
+  const iCloudConnection = useICloudConnection({ refreshEvents });
 
   // Create current user from Google account
-  const currentUser: User | null = user ? {
-    id: '1',
-    name: user.profile.name,
-    email: user.profile.email,
-    color: '#3b82f6'
-  } : null;
+  const currentUser: User | null = user
+    ? {
+        id: '1',
+        name: user.profile.name,
+        email: user.profile.email,
+        color: '#3b82f6',
+      }
+    : null;
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>(['1', '2', '3', '4']);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
-  const [showICloudModal, setShowICloudModal] = useState(false);
-  const [iCloudStatus, setICloudStatus] = useState<{ connected: boolean; email?: string; userId?: string }>({ connected: false });
-  const [showICloudSubmenu, setShowICloudSubmenu] = useState(false);
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(today.setDate(diff));
-  });
 
-  // Check iCloud connection status
-  const checkICloudStatus = async () => {
-    try {
-      const res = await fetch('http://localhost:3001/api/calendar/icloud/status');
-      if (res.ok) {
-        const status = await res.json();
-        setICloudStatus(status);
-      }
-    } catch (error) {
-      console.error('Failed to check iCloud status:', error);
+  // Check iCloud status on mount when user is present
+  useEffect(() => {
+    if (
+      user &&
+      !iCloudConnection.iCloudStatus.connected &&
+      iCloudConnection.iCloudStatus.email === undefined
+    ) {
+      iCloudConnection.checkICloudStatus();
     }
-  };
-
-  // Remove iCloud connection
-  const handleRemoveICloud = async () => {
-    if (!iCloudStatus.userId) return;
-
-    // Close the submenu immediately
-    setShowICloudSubmenu(false);
-
-    try {
-      const res = await fetch(`http://localhost:3001/api/calendar/icloud/${iCloudStatus.userId}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        // Update state to show disconnected
-        setICloudStatus({ connected: false, email: undefined, userId: undefined });
-        // Refresh events to remove iCloud events
-        await refreshEvents();
-        alert('iCloud Calendar disconnected successfully');
-      } else {
-        alert('Failed to disconnect iCloud Calendar');
-      }
-    } catch (error) {
-      console.error('Failed to remove iCloud:', error);
-      alert('Failed to disconnect iCloud Calendar');
-    }
-  };
-
-  // Check status on mount when user is present
-  if (user && !iCloudStatus.connected && iCloudStatus.email === undefined) {
-    checkICloudStatus();
-  }
-
-  const handleICloudConnectSuccess = () => {
-    checkICloudStatus();
-    refreshEvents();
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // Convert Google Calendar events to our CalendarEvent format
   // Note: CalendarContext now returns CalendarEvent[], so we might not need conversion if the provider handles it.
-  // But if the provider returns raw events, we need to check. 
+  // But if the provider returns raw events, we need to check.
   // Our CalendarProvider interface returns CalendarEvent[], so we can use them directly.
   const googleCalendarEvents = calendarEvents;
 
@@ -134,7 +172,7 @@ function AppContent() {
   // If using MockCalendarProvider, it returns mock events.
   // If using GoogleCalendarProvider, it returns Google events.
   // So we just use googleCalendarEvents (which are now just events from the provider).
-  // However, the original code combined them. 
+  // However, the original code combined them.
   // If we want to keep the "mock events" always visible even when logged in (as per original code logic?),
   // the original code was: const allEvents = [...googleCalendarEvents, ...mockEvents];
   // But wait, mockEvents were defined at the top level.
@@ -147,10 +185,8 @@ function AppContent() {
   const allUsers = currentUser ? [currentUser, ...mockUsers] : mockUsers;
 
   const handleUserToggle = (userId: string) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+    setSelectedUsers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
     );
   };
 
@@ -169,9 +205,9 @@ function AppContent() {
   };
 
   const handleWeekChange = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentWeekStart);
+    const newDate = new Date(weekStart);
     newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-    setCurrentWeekStart(newDate);
+    setWeekStart(newDate);
   };
 
   return (
@@ -194,90 +230,15 @@ function AppContent() {
                   )}
                 </div>
               ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-3 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                      style={{ backgroundColor: currentUser!.color }}
-                    >
-                      {currentUser!.name.charAt(0)}
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium text-gray-900">{currentUser!.name}</span>
-                      <span className="text-xs text-gray-500">{currentUser!.email}</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem
-                      onClick={() => refreshEvents()}
-                      className="cursor-pointer"
-                      disabled={isLoadingEvents}
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      <span>{isLoadingEvents ? 'Loading...' : 'Reload Calendar events'}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-
-                    {/* iCloud Menu */}
-                    {!iCloudStatus.connected ? (
-                      <DropdownMenuItem
-                        onClick={() => setShowICloudModal(true)}
-                        className="cursor-pointer"
-                      >
-                        <Cloud className="w-4 h-4 mr-2" />
-                        <span>Connect iCloud Calendar</span>
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenu open={showICloudSubmenu} onOpenChange={setShowICloudSubmenu}>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 gap-2 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100 data-[state=open]:bg-gray-100 text-gray-900"
-                            type="button"
-                          >
-                            <Cloud className="w-4 h-4 mr-2 text-muted-foreground" />
-                            <span>iCloud ({iCloudStatus.email?.split('@')[0] || 'account'})</span>
-                            <ChevronDown className="w-3 h-3 ml-auto text-gray-600" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          side="bottom"
-                          align="center"
-                          className="w-56 shadow-lg"
-                          sideOffset={8}
-                        >
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setShowICloudModal(true);
-                              setShowICloudSubmenu(false);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            <span>Change account</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={handleRemoveICloud}
-                            className="cursor-pointer text-red-600 focus:text-red-600"
-                          >
-                            <LogOut className="w-4 h-4 mr-2" />
-                            <span>Remove connection</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={signOut}
-                      className="cursor-pointer text-red-600 focus:text-red-600"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      <span>Sign out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                currentUser && (
+                  <UserProfileDropdown
+                    currentUser={currentUser}
+                    isLoadingEvents={isLoadingEvents}
+                    iCloudConnection={iCloudConnection}
+                    onRefreshEvents={refreshEvents}
+                    onSignOut={signOut}
+                  />
+                )
               )}
             </div>
           </div>
@@ -297,10 +258,10 @@ function AppContent() {
 
           <div className="lg:col-span-3">
             <CalendarView
-              users={allUsers.filter(u => selectedUsers.includes(u.id))}
-              events={allEvents.filter(e => selectedUsers.includes(e.userId))}
+              users={allUsers.filter((u) => selectedUsers.includes(u.id))}
+              events={allEvents.filter((e) => selectedUsers.includes(e.userId))}
               currentUserId={currentUser?.id || '1'}
-              weekStart={currentWeekStart}
+              weekStart={weekStart}
               onTimeSlotSelect={handleTimeSlotSelect}
               onWeekChange={handleWeekChange}
             />
@@ -311,26 +272,43 @@ function AppContent() {
       <InviteDialog
         isOpen={selectedTimeSlot !== null}
         timeSlot={selectedTimeSlot}
-        users={allUsers.filter(u => u.id !== (currentUser?.id || '1'))}
+        users={allUsers.filter((u) => u.id !== (currentUser?.id || '1'))}
         onClose={() => setSelectedTimeSlot(null)}
         onSendInvite={handleSendInvite}
       />
 
       <ICloudConnectModal
-        isOpen={showICloudModal}
-        onClose={() => setShowICloudModal(false)}
-        onSuccess={handleICloudConnectSuccess}
+        isOpen={iCloudConnection.showICloudModal}
+        onClose={() => iCloudConnection.setShowICloudModal(false)}
+        onSuccess={iCloudConnection.handleICloudConnectSuccess}
       />
     </div>
   );
 }
 
 export default function App() {
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(today.setDate(diff));
+  });
+
   return (
     <GoogleAuthProvider>
-      <CalendarProviderWrapper>
-        <AppContent />
+      <CalendarProviderWrapper weekStart={currentWeekStart}>
+        <AppContentWithWeek weekStart={currentWeekStart} setWeekStart={setCurrentWeekStart} />
       </CalendarProviderWrapper>
     </GoogleAuthProvider>
   );
+}
+
+function AppContentWithWeek({ 
+  weekStart, 
+  setWeekStart 
+}: { 
+  weekStart: Date;
+  setWeekStart: (date: Date) => void;
+}) {
+  return <AppContent weekStart={weekStart} setWeekStart={setWeekStart} />;
 }

@@ -1,44 +1,40 @@
 import { CalendarProvider } from '../interfaces/CalendarProvider';
 import { CalendarEvent } from '@shared/types';
+import { calendarApi, RawCalendarEvent } from './api/calendar';
 
 /**
  * Unified provider that fetches events from all connected calendar accounts
  * (Google, iCloud, etc.) for the authenticated user.
  */
 export class UnifiedCalendarProvider implements CalendarProvider {
-    constructor(private userId: string) { }
+  constructor(private userId: string) { }
 
-    async getEvents(_start: Date, _end: Date): Promise<CalendarEvent[]> {
-        try {
-            // Fetch events from all connected accounts
-            const res = await fetch(`http://localhost:3001/api/calendar/all-events/${this.userId}`);
+  async getEvents(start: Date, end: Date): Promise<CalendarEvent[]> {
+    try {
+      // Fetch events from all connected accounts with date filtering
+      const events = await calendarApi.getAllEvents(this.userId, start, end);
 
-            if (!res.ok) {
-                const errorData = await res.json().catch(() => ({}));
-                console.error('Failed to fetch events:', errorData);
-                return [];
-            }
+      return events.map((event: RawCalendarEvent) => {
+        // Handle both Google Calendar format and iCloud format
+        const startObj = typeof event.start === 'object' ? event.start : null;
+        const endObj = typeof event.end === 'object' ? event.end : null;
 
-            const events: any[] = await res.json();
+        const isAllDay = !!startObj?.date && !startObj?.dateTime;
+        const startStr = startObj?.dateTime || startObj?.date || event.start;
+        const endStr = endObj?.dateTime || endObj?.date || event.end;
 
-            return events.map(event => {
-                // Handle both Google Calendar format and iCloud format
-                const isAllDay = !!event.start?.date && !event.start?.dateTime;
-                const startStr = event.start?.dateTime || event.start?.date || event.start;
-                const endStr = event.end?.dateTime || event.end?.date || event.end;
-
-                return {
-                    id: event.id,
-                    userId: event.userId || this.userId,
-                    start: typeof startStr === 'string' ? new Date(startStr) : startStr,
-                    end: typeof endStr === 'string' ? new Date(endStr) : endStr,
-                    title: event.summary || event.title || '(No title)',
-                    isAllDay: isAllDay,
-                };
-            });
-        } catch (error) {
-            console.error('Error loading calendar events:', error);
-            return [];
-        }
+        return {
+          id: event.id,
+          userId: event.userId || this.userId,
+          start: typeof startStr === 'string' ? new Date(startStr) : (startStr as Date),
+          end: typeof endStr === 'string' ? new Date(endStr) : (endStr as Date),
+          title: event.summary || event.title || '(No title)',
+          isAllDay: isAllDay,
+        };
+      });
+    } catch (error) {
+      console.error('Error loading calendar events:', error);
+      return [];
     }
+  }
 }
