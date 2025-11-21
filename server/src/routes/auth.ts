@@ -1,5 +1,6 @@
 import express from 'express';
 import { googleAuthService } from '../services/googleAuth';
+import { icloudAuthService } from '../services/icloudAuth';
 
 const router = express.Router();
 
@@ -27,6 +28,23 @@ router.get('/google/callback', async (req, res) => {
     } catch (error: any) {
         console.error('Auth error:', error);
         res.status(500).send(`Authentication failed: ${error.message}\n\nCheck server console for details.`);
+    }
+});
+
+router.post('/icloud', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        res.status(400).json({ error: 'Email and password are required' });
+        return;
+    }
+
+    try {
+        const result = await icloudAuthService.verifyCredentials(email, password);
+        res.json(result);
+    } catch (error: any) {
+        console.error('iCloud auth error:', error);
+        res.status(401).json({ error: error.message || 'Authentication failed' });
     }
 });
 

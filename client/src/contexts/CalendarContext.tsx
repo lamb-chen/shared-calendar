@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { CalendarEvent } from '@shared/types';
 import { CalendarProvider } from '../interfaces/CalendarProvider';
 import { MockCalendarProvider } from '../services/MockCalendarProvider';
-import { GoogleCalendarProvider } from '../services/GoogleCalendarProvider';
+import { UnifiedCalendarProvider } from '../services/UnifiedCalendarProvider';
 import { useGoogleAuth } from './GoogleAuthContext';
 
 interface CalendarContextType {
@@ -22,8 +22,9 @@ export function CalendarProviderWrapper({ children }: { children: ReactNode }) {
     // Update provider when user changes
     useEffect(() => {
         if (user) {
-            // Assuming user.profile.sub is the userId
-            setProvider(new GoogleCalendarProvider(user.profile.sub));
+            // Use UnifiedCalendarProvider which fetches from all connected accounts
+            // The userId from Google will be used to identify the primary user
+            setProvider(new UnifiedCalendarProvider(user.profile.sub));
         } else {
             setProvider(new MockCalendarProvider());
         }

@@ -42,6 +42,11 @@ export function CalendarView({
     return date.toLocaleDateString('en-US', { weekday: 'short' });
   };
 
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
   const isEventInSlot = (event: CalendarEvent, date: Date, hour: number) => {
     // Don't show all-day events in regular time slots
     if (event.isAllDay) {
@@ -103,12 +108,25 @@ export function CalendarView({
               <div className="bg-white p-3">
                 <span className="text-gray-600">Time</span>
               </div>
-              {weekDays.map((day, index) => (
-                <div key={index} className="bg-white p-3 text-center">
-                  <div className="text-gray-900">{getDayName(day)}</div>
-                  <div className="text-gray-600 text-sm">{formatDate(day)}</div>
-                </div>
-              ))}
+              {weekDays.map((day, index) => {
+                const today = isToday(day);
+                return (
+                  <div
+                    key={index}
+                    className={`p-3 text-center transition-colors ${today
+                        ? 'bg-gray-100/50 border-t border-gray-300'
+                        : 'bg-white'
+                      }`}
+                  >
+                    <div className={today ? 'text-gray-900 font-medium' : 'text-gray-900'}>
+                      {getDayName(day)}
+                    </div>
+                    <div className="text-gray-600 text-sm">
+                      {formatDate(day)}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* All-day row */}
@@ -120,11 +138,15 @@ export function CalendarView({
                 {weekDays.map((day, dayIndex) => {
                   const allDayEvents = getAllDayEventsForDate(day);
                   const hasEvents = allDayEvents.length > 0;
+                  const today = isToday(day);
 
                   return (
                     <div
                       key={dayIndex}
-                      className="bg-white p-1 cursor-pointer hover:bg-gray-50 transition-colors relative"
+                      className={`p-1 cursor-pointer transition-colors relative ${today
+                          ? 'bg-gray-50/70 hover:bg-gray-100/70'
+                          : 'bg-white hover:bg-gray-50'
+                        }`}
                     >
                       {hasEvents && (
                         <div className="space-y-1 h-full">
@@ -156,11 +178,15 @@ export function CalendarView({
                   {weekDays.map((day, dayIndex) => {
                     const slotEvents = getEventsInSlot(day, hour);
                     const hasEvents = slotEvents.length > 0;
+                    const today = isToday(day);
 
                     return (
                       <div
                         key={dayIndex}
-                        className="bg-white p-1 cursor-pointer hover:bg-gray-50 transition-colors relative"
+                        className={`p-1 cursor-pointer transition-colors relative ${today
+                            ? 'bg-gray-50/70 hover:bg-gray-100/70'
+                            : 'bg-white hover:bg-gray-50'
+                          }`}
                         onClick={() => handleSlotClick(day, hour)}
                       >
                         {hasEvents && (

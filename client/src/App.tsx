@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CalendarView } from './components/CalendarView';
 import { UserList } from './components/UserList';
 import { InviteDialog } from './components/InviteDialog';
+import { ICloudConnectModal } from './components/ICloudConnectModal';
 import { User, CalendarEvent, TimeSlot } from './types';
 import { GoogleAuthProvider, useGoogleAuth } from './contexts/GoogleAuthContext';
 import { CalendarProviderWrapper, useCalendar } from './contexts/CalendarContext';
@@ -12,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './components/ui/dropdown-menu';
-import { RefreshCw, LogOut, ChevronDown } from 'lucide-react';
+import { RefreshCw, LogOut, ChevronDown, Cloud } from 'lucide-react';
 
 // Mock data for demonstration
 const mockUsers: User[] = [
@@ -63,12 +64,65 @@ function AppContent() {
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>(['1', '2', '3', '4']);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
+  const [showICloudModal, setShowICloudModal] = useState(false);
+  const [iCloudStatus, setICloudStatus] = useState<{ connected: boolean; email?: string; userId?: string }>({ connected: false });
+  const [showICloudSubmenu, setShowICloudSubmenu] = useState(false);
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     const day = today.getDay();
     const diff = today.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(today.setDate(diff));
   });
+
+  // Check iCloud connection status
+  const checkICloudStatus = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/calendar/icloud/status');
+      if (res.ok) {
+        const status = await res.json();
+        setICloudStatus(status);
+      }
+    } catch (error) {
+      console.error('Failed to check iCloud status:', error);
+    }
+  };
+
+  // Remove iCloud connection
+  const handleRemoveICloud = async () => {
+    if (!iCloudStatus.userId) return;
+
+    // Close the submenu immediately
+    setShowICloudSubmenu(false);
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/calendar/icloud/${iCloudStatus.userId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        // Update state to show disconnected
+        setICloudStatus({ connected: false, email: undefined, userId: undefined });
+        // Refresh events to remove iCloud events
+        await refreshEvents();
+        alert('iCloud Calendar disconnected successfully');
+      } else {
+        alert('Failed to disconnect iCloud Calendar');
+      }
+    } catch (error) {
+      console.error('Failed to remove iCloud:', error);
+      alert('Failed to disconnect iCloud Calendar');
+    }
+  };
+
+  // Check status on mount when user is present
+  if (user && !iCloudStatus.connected && iCloudStatus.email === undefined) {
+    checkICloudStatus();
+  }
+
+  const handleICloudConnectSuccess = () => {
+    checkICloudStatus();
+    refreshEvents();
+  };
 
   // Convert Google Calendar events to our CalendarEvent format
   // Note: CalendarContext now returns CalendarEvent[], so we might not need conversion if the provider handles it.
@@ -164,6 +218,57 @@ function AppContent() {
                       <span>{isLoadingEvents ? 'Loading...' : 'Reload Calendar events'}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+
+                    {/* iCloud Menu */}
+                    {!iCloudStatus.connected ? (
+                      <DropdownMenuItem
+                        onClick={() => setShowICloudModal(true)}
+                        className="cursor-pointer"
+                      >
+                        <Cloud className="w-4 h-4 mr-2" />
+                        <span>Connect iCloud Calendar</span>
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenu open={showICloudSubmenu} onOpenChange={setShowICloudSubmenu}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 gap-2 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100 data-[state=open]:bg-gray-100 text-gray-900"
+                            type="button"
+                          >
+                            <Cloud className="w-4 h-4 mr-2 text-muted-foreground" />
+                            <span>iCloud ({iCloudStatus.email?.split('@')[0] || 'account'})</span>
+                            <ChevronDown className="w-3 h-3 ml-auto text-gray-600" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          side="bottom"
+                          align="center"
+                          className="w-56 shadow-lg"
+                          sideOffset={8}
+                        >
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setShowICloudModal(true);
+                              setShowICloudSubmenu(false);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            <span>Change account</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={handleRemoveICloud}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            <span>Remove connection</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={signOut}
                       className="cursor-pointer text-red-600 focus:text-red-600"
@@ -209,6 +314,12 @@ function AppContent() {
         users={allUsers.filter(u => u.id !== (currentUser?.id || '1'))}
         onClose={() => setSelectedTimeSlot(null)}
         onSendInvite={handleSendInvite}
+      />
+
+      <ICloudConnectModal
+        isOpen={showICloudModal}
+        onClose={() => setShowICloudModal(false)}
+        onSuccess={handleICloudConnectSuccess}
       />
     </div>
   );
